@@ -1,0 +1,17 @@
+name: bdj_license_core
+description: Biblioteca central de criptografia Ed25519 y gestion de tokens SPP3 para BDJ Studio.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  crypto: ^3.0.3
+  cryptography: ^2.7.0
+  meta: ^1.11.0
+  uuid: ^4.3.3
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0

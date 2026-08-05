@@ -1,0 +1,15 @@
+# Dart and Flutter build artifacts
+.dart_tool/
+build/
+*.lock
+.packages
+.pub-cache/
+.pub/
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+*.log
+*.swp
