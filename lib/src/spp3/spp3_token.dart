@@ -233,7 +233,7 @@ class Spp3Token {
         status: Spp3VerificationStatus.productMismatch,
         payload: payload,
         signerCertificate: signerCert,
-        errorMessage: 'Esta licencia fue emitida para otro producto de BDJ Studio (${payload.productCode}).',
+        errorMessage: 'Licencia no válida.',
       );
     }
 
