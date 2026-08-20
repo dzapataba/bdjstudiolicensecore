@@ -180,5 +180,36 @@ void main() {
         ),
       );
     });
+
+    test('7. Emisión y verificación de licencia para BDJ Studio Stems Music', () async {
+      final hwidHash = KeyHierarchy.hashHwid('154A-0ABC-64BF-4DD2');
+      final payload = Spp3Payload(
+        licenseId: 'LIC-STEMS-001',
+        customerId: 'CLIENT-STEMS',
+        deviceId: '154A-0ABC-64BF-4DD2',
+        hwidHash: hwidHash,
+        productCode: 'stems_music',
+        exactVersion: '1.0.0',
+        plan: 'permanente',
+        issuedAtUtc: DateTime.now().toUtc(),
+      );
+
+      final token = await Spp3Token.issue(
+        payload: payload,
+        signerCertificate: validAdminCert,
+        operatorKeyPair: operatorKeyPair,
+      );
+
+      final result = await Spp3Token.verify(
+        token: token,
+        rootPublicKeyBase64: rootPublicKeyB64,
+        expectedProductCode: 'stems_music',
+        expectedVersion: '1.0.0',
+        currentHwidHash: hwidHash,
+      );
+
+      expect(result.isValid, isTrue);
+      expect(result.status, equals(Spp3VerificationStatus.valid));
+    });
   });
 }

@@ -11,21 +11,34 @@ class DeviceFingerprintFailure implements Exception {
 
 class HwidResult {
   final String schemaVersion;
+  final String platform;
+  final Map<String, String> components;
   final String canonicalString;
   final String visibleHwid;
+
+  /// Firma de estabilidad: hash V2 de los componentes de hardware que NO son
+  /// volátiles (excluye p. ej. ANDROID_ID / identifierForVendor). Sirve para
+  /// reutilizar el mismo HWID tras un formateo del sistema.
+  final String stabilitySignature;
   final String deviceHash;
 
   const HwidResult({
     required this.schemaVersion,
+    required this.platform,
+    required this.components,
     required this.canonicalString,
     required this.visibleHwid,
+    required this.stabilitySignature,
     required this.deviceHash,
   });
 
   Map<String, dynamic> toJson() => {
     'schemaVersion': schemaVersion,
+    'platform': platform,
+    'components': components,
     'canonicalString': canonicalString,
     'visibleHwid': visibleHwid,
+    'stabilitySignature': stabilitySignature,
     'deviceHash': deviceHash,
   };
 }
@@ -33,6 +46,13 @@ class HwidResult {
 class HwidEngine {
   static const String hwidSchemaVersion = 'V2';
   static const String _prefix = 'BDJ-HWID-$hwidSchemaVersion';
+
+  /// Claves de componentes que se reinician con un formateo/reinstalación del
+  /// sistema y por tanto se EXCLUYEN de la firma de estabilidad:
+  ///  - 'id' en Android = ANDROID_ID (Settings.Secure.ANDROID_ID), se reinicia
+  ///    con factory reset y es distinto por firma de app.
+  ///  - 'id' en iOS = identifierForVendor, puede cambiar tras borrado total.
+  static const Set<String> volatileComponentKeys = {'id'};
 
   static const List<String> _invalidPlaceholders = [
     '00000000-0000-0000-0000-000000000000',
@@ -116,24 +136,52 @@ class HwidEngine {
     }
 
     final canonicalString = '$_prefix|platform=$cleanPlatform|${orderedParts.join('|')}';
-    
-    // SHA-256 sobre UTF-8
-    final hashBytes = crypto.sha256.convert(utf8.encode(canonicalString));
-    final fullHashHex = hashBytes.toString().toUpperCase();
 
-    // Representación visible XXXX-XXXX-XXXX-XXXX
-    final shortHash = fullHashHex.substring(0, 16);
-    final visibleHwid = '${shortHash.substring(0, 4)}-${shortHash.substring(4, 8)}-${shortHash.substring(8, 12)}-${shortHash.substring(12, 16)}';
-    
+    final visibleHwid = _hashToHwid(canonicalString);
+
+    // Firma de estabilidad excluyendo componentes volátiles (reinitables por formateo)
+    final stabilitySignature = _stableSignature(
+      platform: cleanPlatform,
+      validPairs: validPairs,
+      fallback: visibleHwid,
+    );
+
     // Hash completo para validación criptográfica SPP3
     final deviceHash = KeyHierarchy.hashHwid(visibleHwid);
 
     return HwidResult(
       schemaVersion: hwidSchemaVersion,
+      platform: cleanPlatform,
+      components: Map<String, String>.unmodifiable(validPairs),
       canonicalString: canonicalString,
       visibleHwid: visibleHwid,
+      stabilitySignature: stabilitySignature,
       deviceHash: deviceHash,
     );
+  }
+
+  static String _hashToHwid(String data) {
+    final hashBytes = crypto.sha256.convert(utf8.encode(data));
+    final fullHashHex = hashBytes.toString().toUpperCase();
+    final shortHash = fullHashHex.substring(0, 16);
+    return '${shortHash.substring(0, 4)}-${shortHash.substring(4, 8)}-${shortHash.substring(8, 12)}-${shortHash.substring(12, 16)}';
+  }
+
+  static String _stableSignature({
+    required String platform,
+    required Map<String, String> validPairs,
+    required String fallback,
+  }) {
+    final stable = <String, String>{};
+    for (final entry in validPairs.entries) {
+      if (volatileComponentKeys.contains(entry.key)) continue;
+      stable[entry.key] = entry.value.toLowerCase();
+    }
+    if (stable.isEmpty) return fallback;
+
+    final keys = stable.keys.toList()..sort();
+    final parts = keys.map((k) => '$k=${stable[k]}').join('|');
+    return _hashToHwid('$_prefix|platform=$platform|$parts');
   }
 
   /// Generación legacy V1 puramente para transición en la interfaz de BDJ Studio License.

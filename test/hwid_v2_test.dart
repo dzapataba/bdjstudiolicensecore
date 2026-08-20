@@ -154,8 +154,70 @@ void main() {
       expect(hwidLicense.deviceHash, equals(hwidSynthPro.deviceHash));
       expect(hwidLicense.deviceHash, equals(hwidWaveVideo.deviceHash));
 
+      expect(hwidLicense.stabilitySignature, equals(hwidSamplePad.stabilitySignature));
+
       // Comprobación explícita del formato canónico
       expect(hwidLicense.canonicalString, startsWith('BDJ-HWID-V2|platform=windows|'));
+    });
+  });
+
+  group('FIRMA DE ESTABILIDAD - PERSISTENCIA ANTE FORMATEO', () {
+    test('ANDROID: al reiniciarse ANDROID_ID (factory reset) la firma de estabilidad no cambia', () {
+      final antes = HwidEngine.canonicalize(
+        platform: 'android',
+        components: {
+          'id': 'android-id-antes-del-reset',
+          'brand': 'Samsung',
+          'device': 'a52',
+          'hardware': 'qcom',
+          'board': 'sm7150',
+          'model': 'SM-A525F',
+        },
+      );
+
+      // Factory reset: ANDROID_ID cambia, el resto del hardware sigue igual
+      final despues = HwidEngine.canonicalize(
+        platform: 'android',
+        components: {
+          'id': 'android-id-DESPUES-del-reset',
+          'brand': 'Samsung',
+          'device': 'a52',
+          'hardware': 'qcom',
+          'board': 'sm7150',
+          'model': 'SM-A525F',
+        },
+      );
+
+      expect(antes.visibleHwid, isNot(equals(despues.visibleHwid)));
+      expect(antes.stabilitySignature, equals(despues.stabilitySignature));
+      // La firma NO usa el identificador volátil 'id'
+      expect(
+        antes.stabilitySignature,
+        isNot(equals(HwidEngine.generateV1Legacy('android-id-antes-del-reset'))),
+      );
+    });
+
+    test('WINDOWS: la firma de estabilidad coincide con el HWID (sin componentes volátiles)', () {
+      final base = HwidEngine.canonicalize(
+        platform: 'windows',
+        components: {
+          'smbiosUuid': '79B6782E-A028-CF16-A0C2-D843AE8E1A11',
+          'cpuId': 'BFEBFBFF00090672',
+          'baseboardSerial': '07D4822_O31E087449',
+        },
+      );
+      expect(base.stabilitySignature, equals(base.visibleHwid));
+      expect(base.platform, equals('windows'));
+      expect(base.components.containsKey('cpuid'), isTrue);
+      expect(base.components.containsKey('smbiosuuid'), isTrue);
+    });
+
+    test('IOS: sin componentes estables la firma cae al HWID (identificadorForVendor es lo único)', () {
+      final base = HwidEngine.canonicalize(
+        platform: 'ios',
+        components: {'id': '8A55B2E1-6A18-4903-810A-33D7C513E0A3'},
+      );
+      expect(base.stabilitySignature, equals(base.visibleHwid));
     });
   });
 }
