@@ -131,7 +131,7 @@ class Spp3Token {
     required String token,
     required String rootPublicKeyBase64,
     required String expectedProductCode,
-    required String expectedVersion,
+    String? expectedVersion,
     required String currentHwidHash,
     DateTime? currentClockUtc,
   }) async {
@@ -237,27 +237,29 @@ class Spp3Token {
       );
     }
 
-    String targetVer;
-    String licVer;
-    try {
-      targetVer = Spp3Payload.stripBuildNumber(expectedVersion);
-      licVer = Spp3Payload.stripBuildNumber(payload.exactVersion);
-    } catch (e) {
-      return Spp3VerificationResult(
-        status: Spp3VerificationStatus.versionMismatch,
-        payload: payload,
-        signerCertificate: signerCert,
-        errorMessage: 'Discrepancia o formato de versión inválido: $e',
-      );
-    }
+    if (expectedVersion != null) {
+      String targetVer;
+      String licVer;
+      try {
+        targetVer = Spp3Payload.stripBuildNumber(expectedVersion);
+        licVer = Spp3Payload.stripBuildNumber(payload.exactVersion);
+      } catch (e) {
+        return Spp3VerificationResult(
+          status: Spp3VerificationStatus.versionMismatch,
+          payload: payload,
+          signerCertificate: signerCert,
+          errorMessage: 'Discrepancia o formato de versión inválido: $e',
+        );
+      }
 
-    if (licVer != targetVer) {
-      return Spp3VerificationResult(
-        status: Spp3VerificationStatus.versionMismatch,
-        payload: payload,
-        signerCertificate: signerCert,
-        errorMessage: 'Esta licencia es válida exclusivamente para la versión $licVer y no se autoriza en la versión actual ($targetVer).',
-      );
+      if (licVer != targetVer) {
+        return Spp3VerificationResult(
+          status: Spp3VerificationStatus.versionMismatch,
+          payload: payload,
+          signerCertificate: signerCert,
+          errorMessage: 'Esta licencia es válida exclusivamente para la versión $licVer y no se autoriza en la versión actual ($targetVer).',
+        );
+      }
     }
 
     if (payload.hwidHash.toLowerCase() != currentHwidHash.toLowerCase()) {
