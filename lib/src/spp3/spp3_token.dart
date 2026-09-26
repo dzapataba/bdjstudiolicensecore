@@ -25,7 +25,8 @@ class Spp3Payload {
       deviceId: json['did'] as String,
       hwidHash: json['hhash'] as String,
       productCode: json['pcode'] as String,
-      exactVersion: json['ver'] as String,
+      // La versión es solo informativa: un token sin 'ver' también es válido.
+      exactVersion: json['ver'] as String? ?? '0.0.0',
       plan: json['plan'] as String,
       issuedAtUtc: DateTime.parse(json['iat'] as String).toUtc(),
       expiresAtUtc: json['exp'] != null ? DateTime.parse(json['exp'] as String).toUtc() : null,
