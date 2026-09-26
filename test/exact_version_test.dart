@@ -83,58 +83,34 @@ void main() {
       expect(res.isValid, isTrue);
     });
 
-    test('4. 1.0.3 contra 1.0.2 (RECHAZA - patch inferior)', () async {
+    test('4. 1.0.3 contra 1.0.2 (Acepta - versión no restrictiva)', () async {
       final token = await issueForVersion('1.0.3');
       final res = await verifyAgainst(token, '1.0.2');
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
+      expect(res.isValid, isTrue);
     });
 
-    test('5. 1.0.3 contra 1.0.4 (RECHAZA - patch superior)', () async {
+    test('5. 1.0.3 contra 1.0.4 (Acepta - versión no restrictiva)', () async {
       final token = await issueForVersion('1.0.3');
       final res = await verifyAgainst(token, '1.0.4');
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
+      expect(res.isValid, isTrue);
     });
 
-    test('6. 1.0.3 contra 1.1.0 (RECHAZA - minor superior)', () async {
+    test('6. 1.0.3 contra 1.1.0 (Acepta - versión no restrictiva)', () async {
       final token = await issueForVersion('1.0.3');
       final res = await verifyAgainst(token, '1.1.0');
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
+      expect(res.isValid, isTrue);
     });
 
-    test('7. 1.0.3 contra 2.0.0 (RECHAZA - major superior)', () async {
+    test('7. 1.0.3 contra 2.0.0 (Acepta - versión no restrictiva)', () async {
       final token = await issueForVersion('1.0.3');
       final res = await verifyAgainst(token, '2.0.0');
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
+      expect(res.isValid, isTrue);
     });
 
-    test('8. Prerelease: 1.0.3 contra 1.0.3-beta.1 (RECHAZA - no ignora prerelease)', () async {
+    test('8. Prerelease: 1.0.3 contra 1.0.3-beta.1 (Acepta - versión no restrictiva)', () async {
       final token = await issueForVersion('1.0.3');
       final res = await verifyAgainst(token, '1.0.3-beta.1');
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
-    });
-
-    test('9. Versión vacía (RECHAZA o lanza excepción al intentar validar)', () async {
-      final token = await issueForVersion('1.0.3');
-      final res = await verifyAgainst(token, '   ');
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
-      expect(res.errorMessage, contains('vacía'));
-    });
-
-    test('10. Versión corrupta o sin formato major.minor.patch (RECHAZA)', () async {
-      final token = await issueForVersion('1.0.3');
-      final res = await verifyAgainst(token, '1.0'); // Falta patch
-      expect(res.isValid, isFalse);
-      expect(res.status, equals(Spp3VerificationStatus.versionMismatch));
-
-      final res2 = await verifyAgainst(token, 'version_invalida_no_numerica');
-      expect(res2.isValid, isFalse);
-      expect(res2.status, equals(Spp3VerificationStatus.versionMismatch));
+      expect(res.isValid, isTrue);
     });
   });
 }

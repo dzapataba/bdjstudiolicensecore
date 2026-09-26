@@ -227,7 +227,10 @@ class Spp3Token {
       );
     }
 
-    // 4. Validar Parámetros Estrictos de Licenciamiento (Product, Versión Exacta, HWID y Caducidad)
+    // 4. Validar Parámetros de Licenciamiento (Product, HWID y Caducidad)
+    // Nota: La versión del producto ya no es restrictiva en la activación ni verificación.
+    // Todas las aplicaciones (Sample Pad, Search Pro, Stems Music, etc.) aceptan licencias
+    // sin importar discrepancias de versión de la aplicación o del token.
     if (payload.productCode != expectedProductCode) {
       return Spp3VerificationResult(
         status: Spp3VerificationStatus.productMismatch,
@@ -235,31 +238,6 @@ class Spp3Token {
         signerCertificate: signerCert,
         errorMessage: 'Licencia no válida.',
       );
-    }
-
-    if (expectedVersion != null) {
-      String targetVer;
-      String licVer;
-      try {
-        targetVer = Spp3Payload.stripBuildNumber(expectedVersion);
-        licVer = Spp3Payload.stripBuildNumber(payload.exactVersion);
-      } catch (e) {
-        return Spp3VerificationResult(
-          status: Spp3VerificationStatus.versionMismatch,
-          payload: payload,
-          signerCertificate: signerCert,
-          errorMessage: 'Discrepancia o formato de versión inválido: $e',
-        );
-      }
-
-      if (licVer != targetVer) {
-        return Spp3VerificationResult(
-          status: Spp3VerificationStatus.versionMismatch,
-          payload: payload,
-          signerCertificate: signerCert,
-          errorMessage: 'Esta licencia es válida exclusivamente para la versión $licVer y no se autoriza en la versión actual ($targetVer).',
-        );
-      }
     }
 
     if (payload.hwidHash.toLowerCase() != currentHwidHash.toLowerCase()) {

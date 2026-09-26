@@ -76,7 +76,7 @@ void main() {
       expect(result.payload?.exactVersion, equals('1.0.3')); // Guardado puro sin build
     });
 
-    test('4. Rechazo estricto ante discrepancia de Versión Exacta de aplicación', () async {
+    test('4. Acepta licencia ante cambio de Versión de la aplicación (no restrictiva)', () async {
       final hwidHash = KeyHierarchy.hashHwid('BDJ-MAC-PRO');
       final payload = Spp3Payload(
         licenseId: 'LIC-00002',
@@ -95,7 +95,7 @@ void main() {
         operatorKeyPair: operatorKeyPair,
       );
 
-      // El usuario actualizó su app a la versión 1.0.4 sin obtener nueva licencia para esta release
+      // El usuario actualizó su app a la versión 1.0.4 - se valida válidamente
       final result = await Spp3Token.verify(
         token: token,
         rootPublicKeyBase64: rootPublicKeyB64,
@@ -104,8 +104,8 @@ void main() {
         currentHwidHash: hwidHash,
       );
 
-      expect(result.status, equals(Spp3VerificationStatus.versionMismatch));
-      expect(result.errorMessage, contains('válida exclusivamente para la versión 1.0.3'));
+      expect(result.isValid, isTrue);
+      expect(result.status, equals(Spp3VerificationStatus.valid));
     });
 
     test('5. Rechazo inmediato ante discrepancia en Hash de HWID', () async {
